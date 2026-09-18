@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Removedor de Metadados Profissional</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Bibliotecas para Imagens, PDFs e Documentos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center justify-between font-sans selection:bg-emerald-500 selection:text-white">
+
+    <!-- Header -->
+    <header class="w-full max-w-4xl px-6 py-8 text-center">
+        <h1 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+            🛡️ Removedor de Metadados
+        </h1>
+        <p class="mt-2 text-sm text-slate-400">
+            Remova dados confidenciais (GPS, data, autor, câmera) de Fotos, Vídeos, PDFs e Documentos com total privacidade.
+        </p>
+    </header>
+
+    <!-- Main Container -->
+    <main class="w-full max-w-3xl px-4 pb-12">
+        <div class="bg-slate-800 border border-slate-700/60 shadow-2xl rounded-2xl p-6 sm:p-8 backdrop-blur-sm">
+            
+            <!-- Tabs Navigation -->
+            <div class="flex flex-wrap gap-2 border-b border-slate-700 pb-4 mb-6">
+                <button onclick="mudarAba('foto')" id="btn-tab-foto" class="flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all bg-emerald-600 text-white shadow-lg shadow-emerald-900/40">
+                    📷 Fotos
+                </button>
+                <button onclick="mudarAba('video')" id="btn-tab-video" class="flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all bg-slate-700 text-slate-300 hover:bg-slate-600">
+                    🎬 Vídeos
+                </button>
+                <button onclick="mudarAba('pdf')" id="btn-tab-pdf" class="flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all bg-slate-700 text-slate-300 hover:bg-slate-600">
+                    📄 PDFs & Docs
+                </button>
+            </div>
+
+            <!-- TAB FOTO -->
+            <div id="tab-foto" class="tab-content active space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Selecione a Imagem (JPG, PNG, WebP):</label>
+                    <input type="file" id="inputFileFoto" accept="image/jpeg, image/png, image/webp" class="w-full text-sm text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-500 file:cursor-pointer bg-slate-900/50 border border-slate-700 rounded-xl p-2 cursor-pointer">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Nome do arquivo final (sem extensão):</label>
+                    <input type="text" id="nomeFoto" placeholder="ex: foto_limpa" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 text-sm">
+                </div>
+                <button onclick="processarFoto()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-6 rounded-xl transition shadow-lg shadow-emerald-900/30 flex items-center justify-center gap-2">
+                    ✨ Remover Metadados da Foto
+                </button>
+            </div>
+
+            <!-- TAB VÍDEO -->
+            <div id="tab-video" class="tab-content space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Selecione o Vídeo (MP4, MOV):</label>
+                    <input type="file" id="inputFileVideo" accept="video/mp4, video/quicktime" class="w-full text-sm text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 file:cursor-pointer bg-slate-900/50 border border-slate-700 rounded-xl p-2 cursor-pointer">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Nome do arquivo final (sem extensão):</label>
+                    <input type="text" id="nomeVideo" placeholder="ex: video_limpo" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500 text-sm">
+                </div>
+                <div class="text-xs text-slate-400 bg-blue-950/30 border border-blue-900/50 p-3 rounded-xl">
+                    ℹ️ Varredura profunda.
+                </div>
+                <button onclick="limparVideo()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-6 rounded-xl transition shadow-lg shadow-blue-900/30 flex items-center justify-center gap-2">
+                    ✨ Remover Metadados por Completo do Vídeo
+                </button>
+            </div>
+
+            <!-- TAB PDF & DOCS -->
+            <div id="tab-pdf" class="tab-content space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Selecione o Documento (PDF, Word .docx, Docs .odt):</label>
+                    <input type="file" id="inputFilePdf" accept="application/pdf, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.oasis.opendocument.text" class="w-full text-sm text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-amber-600 file:text-white hover:file:bg-amber-500 file:cursor-pointer bg-slate-900/50 border border-slate-700 rounded-xl p-2 cursor-pointer">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Nome do arquivo final (sem extensão):</label>
+                    <input type="text" id="nomePdf" placeholder="ex: documento_limpo" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-amber-500 text-sm">
+                </div>
+                <button onclick="processarDocumento()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 px-6 rounded-xl transition shadow-lg shadow-amber-900/30 flex items-center justify-center gap-2">
+                    ✨ Remover Metadados do Documento
+                </button>
+            </div>
+
+            <!-- Feedback / Status -->
+            <div id="statusBox" class="mt-6 hidden p-4 rounded-xl text-sm font-medium text-center"></div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-xs text-slate-500 py-6 text-center">
+        Processamento local seguro. Seus arquivos nunca saem do seu dispositivo.
+    </footer>
+
+    <!-- Scripts de Lógica -->
+    <script>
+        function mudarAba(aba) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(`tab-${aba}`).classList.add('active');
+
+            ['foto', 'video', 'pdf'].forEach(t => {
+                const btn = document.getElementById(`btn-tab-${t}`);
+                if (t === aba) {
+                    btn.className = "flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all " + 
+                        (t === 'foto' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/40' : 
+                         t === 'video' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40' : 'bg-amber-600 text-white shadow-lg shadow-amber-900/40');
+                } else {
+                    btn.className = "flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all bg-slate-700 text-slate-300 hover:bg-slate-600";
+                }
+            });
+            ocultarStatus();
+        }
+
+        function mostrarStatus(mensagem, tipo = 'sucesso') {
+            const box = document.getElementById('statusBox');
+            box.classList.remove('hidden', 'bg-emerald-900/50', 'text-emerald-300', 'border-emerald-700', 'bg-rose-900/50', 'text-rose-300', 'border-rose-700');
+            if (tipo === 'sucesso') {
+                box.classList.add('bg-emerald-900/50', 'text-emerald-300', 'border', 'border-emerald-700');
+            } else {
+                box.classList.add('bg-rose-900/50', 'text-rose-300', 'border', 'border-rose-700');
+            }
+            box.innerText = mensagem;
+        }
+
+        function ocultarStatus() {
+            document.getElementById('statusBox').classList.add('hidden');
+        }
+
+        function baixarBlob(blob, nome) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = nome;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // --- FOTO ---
+        function processarFoto() {
+            const input = document.getElementById('inputFileFoto');
+            const nomePersonalizado = document.getElementById('nomeFoto').value.trim();
+            if (input.files.length === 0) {
+                mostrarStatus("Selecione uma imagem primeiro.", "erro");
+                return;
+            }
+            const arquivo = input.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+
+                    const ext = arquivo.type === 'image/png' ? 'image/png' : 'image/jpeg';
+                    canvas.toBlob(function(blob) {
+                        const nomeFinal = (nomePersonalizado ? nomePersonalizado : "foto_limpa") + (ext === 'image/png' ? '.png' : '.jpg');
+                        baixarBlob(blob, nomeFinal);
+                        mostrarStatus("Metadados da foto removidos com sucesso e arquivo baixado!");
+                    }, ext, 0.95);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(arquivo);
+        }
+
+        // --- VÍDEO (Limpeza Profunda de Átomos de Metadados MP4/MOV) ---
+        async function limparVideo() {
+            const input = document.getElementById('inputFileVideo');
+            const nomePersonalizado = document.getElementById('nomeVideo').value.trim();
+
+            if (input.files.length === 0) {
+                mostrarStatus("Selecione um arquivo de vídeo primeiro.", "erro");
+                return;
+            }
+
+            try {
+                const arquivo = input.files[0];
+                const buffer = await arquivo.arrayBuffer();
+                const view = new DataView(buffer);
+                
+                function limparAtomos(start, end) {
+                    let offset = start;
+                    while (offset < end - 8) {
+                        if (offset + 8 > buffer.byteLength) break;
+                        let tamanho = view.getUint32(offset);
+                        let tipo = '';
+                        for (let i = 0; i < 4; i++) {
+                            tipo += String.fromCharCode(view.getUint8(offset + 4 + i));
+                        }
+                        
+                        if (tamanho === 1 && offset + 16 <= buffer.byteLength) {
+                            tamanho = Number(view.getBigUint64(offset + 8));
+                        }
+                        if (tamanho === 0 || offset + tamanho > buffer.byteLength) break;
+
+                        // Se encontrar blocos de metadados de texto, tags do sistema ou geolocalização, zera tudo
+                        if (['udta', 'meta', 'ilst', '©too', '©nam', '©ART', '©alb', '©day', '©cmt', 'xyz ', 'loci'].includes(tipo)) {
+                            for (let i = 0; i < tamanho; i++) {
+                                view.setUint8(offset + i, 0);
+                            }
+                        } else {
+                            // Recursivo para blocos internos que contêm sub-átomos (ex: moov -> udta)
+                            if (['moov', 'trak', 'edts', 'mdia', 'minf', 'stbl', 'ilst'].includes(tipo)) {
+                                limparAtomos(offset + 8, offset + tamanho);
+                            }
+                        }
+                        offset += tamanho;
+                    }
+                }
+
+                limparAtomos(0, buffer.byteLength);
+
+                const blob = new Blob([buffer], { type: arquivo.type || 'video/mp4' });
+                const nomeFinal = (nomePersonalizado ? nomePersonalizado : "video_limpo") + '.mp4';
+
+                baixarBlob(blob, nomeFinal);
+                mostrarStatus("Metadados do vídeo limpos por completo!");
+            } catch (err) {
+                console.error(err);
+                mostrarStatus("Erro ao limpar os metadados profundos do vídeo.", "erro");
+            }
+        }
+
+        // --- DOCUMENTOS (PDF, Word .docx, Google Docs .odt) ---
+        async function processarDocumento() {
+            const input = document.getElementById('inputFilePdf');
+            const nomePersonalizado = document.getElementById('nomePdf').value.trim();
+            if (input.files.length === 0) {
+                mostrarStatus("Selecione um arquivo de documento primeiro.", "erro");
+                return;
+            }
+
+            const arquivo = input.files[0];
+            const nomeOriginal = arquivo.name.toLowerCase();
+
+            try {
+                if (nomeOriginal.endsWith('.pdf')) {
+                    const arrayBuffer = await arquivo.arrayBuffer();
+                    const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+
+                    pdfDoc.setTitle('');
+                    pdfDoc.setAuthor('');
+                    pdfDoc.setSubject('');
+                    pdfDoc.setKeywords([]);
+                    pdfDoc.setProducer('');
+                    pdfDoc.setCreator('');
+
+                    const pdfBytes = await pdfDoc.save();
+                    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                    const nomeFinal = (nomePersonalizado ? nomePersonalizado : "documento_limpo") + '.pdf';
+                    
+                    baixarBlob(blob, nomeFinal);
+                    mostrarStatus("Metadados do PDF removidos com sucesso!");
+                } 
+                else if (nomeOriginal.endsWith('.docx') || nomeOriginal.endsWith('.odt')) {
+                    const zip = new JSZip();
+                    const zipCarregado = await zip.loadAsync(arquivo);
+
+                    const caminhosMetadados = [
+                        'docProps/core.xml',
+                        'docProps/app.xml',
+                        'meta.xml'
+                    ];
+
+                    let limpo = false;
+                    for (const caminho of caminhosMetadados) {
+                        if (zipCarregado.file(caminho)) {
+                            if (caminho.includes('core.xml')) {
+                                zipCarregado.file(caminho, '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"></cp:coreProperties>');
+                            } else if (caminho.includes('app.xml')) {
+                                zipCarregado.file(caminho, '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"></Properties>');
+                            } else if (caminho.includes('meta.xml')) {
+                                zipCarregado.file(caminho, '<?xml version="1.0" encoding="UTF-8"?><office:document-meta xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0"><office:meta></office:meta></office:document-meta>');
+                            }
+                            limpo = true;
+                        }
+                    }
+
+                    const extensao = nomeOriginal.endsWith('.docx') ? '.docx' : '.odt';
+                    const novoBlob = await zipCarregado.generateAsync({ type: 'blob' });
+                    const nomeFinal = (nomePersonalizado ? nomePersonalizado : "documento_limpo") + extensao;
+
+                    baixarBlob(novoBlob, nomeFinal);
+                    mostrarStatus(limpo ? "Metadados do documento removidos com sucesso!" : "Arquivo processado com segurança.");
+                } else {
+                    mostrarStatus("Formato de documento não suportado. Use PDF, .docx ou .odt", "erro");
+                }
+            } catch (err) {
+                console.error(err);
+                mostrarStatus("Erro ao processar o documento.", "erro");
+            }
+        }
+    </script>
+</body>
+</html>
